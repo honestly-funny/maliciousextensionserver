@@ -10,12 +10,25 @@ from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
 import json
 from textblob import TextBlob
+import matplotlib.pyplot as plt
+from ipywidgets import interactive
+import numpy as np
+import plotly
+import plotly.graph_objs as go
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route("/")
 def hello():
+
+	# plotly.offline.init_notebook_mode(connected=True)
+
+	# plotly.offline.iplot({
+	#     "data": [go.Scatter(x=[1, 2, 3, 4], y=[4, 3, 2, 1])],
+	#     "layout": go.Layout(title="hello world")
+	# })
+
 	return "App is running!"
 
 
@@ -189,6 +202,24 @@ def sentiment_analyzer_scores(sentence):
 	score = analyser.polarity_scores(sentence)
 	return score
 
+@app.route("/site/<string:input_string>")
+def csite_call_api(input_string):
+	neg = 0
+	pos = 0
+	st = 0
+	sentence_count = 0
+	sentences = input_string.split('.')
+	for sentence in sentences:
+		st += TextBlob(sentence).sentiment.subjectivity
+		scores = sentiment_analyzer_scores(sentence)
+		if scores['pos'] > scores['neg']:
+			pos += 1
+		elif scores['pos'] < scores['neg']:
+			neg += 1
+		sentence_count += 1
+	if sentence_count == 0:
+		return "No sentences found, be sure to select some text"
+	return "Negative: " + str(round((100 *neg)/sentence_count)) + "% Positive: " + str(round((100*pos)/sentence_count)) + "%" + " Subjectivity: " + str(round((st*100)/sentence_count)) + "%"    
 
 
             

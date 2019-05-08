@@ -12,3 +12,7 @@ praw
 vaderSentiment
 tweepy
 textblob
+matplotlib
+numpy
+ipywidgets
+plotly
