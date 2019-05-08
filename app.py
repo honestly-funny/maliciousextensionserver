@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from praw.models import MoreComments
 
@@ -10,27 +10,85 @@ from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
 import json
 from textblob import TextBlob
-import matplotlib.pyplot as plt
-from ipywidgets import interactive
-import numpy as np
+from nltk import sent_tokenize
+
+import re 
+#import matplotlib.pyplot as plt
+
+# from ipywidgets import interactive
+# import numpy as np
+# import plotly
+# import plotly.graph_objs as go
+
+# import dash
+# import dash_core_components as dcc
+# import dash_html_components as html
+import json
 import plotly
-import plotly.graph_objs as go
+
+import pandas as pd
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route("/")
-def hello():
+# def hello():
 
-	# plotly.offline.init_notebook_mode(connected=True)
+# 	return "App is running!"
+def index():
+    rng = pd.date_range('1/1/2011', periods=7500, freq='H')
+    ts = pd.Series(np.random.randn(len(rng)), index=rng)
 
-	# plotly.offline.iplot({
-	#     "data": [go.Scatter(x=[1, 2, 3, 4], y=[4, 3, 2, 1])],
-	#     "layout": go.Layout(title="hello world")
-	# })
+    graphs = [
+        dict(
+            data=[
+                dict(
+                    x=[1, 2, 3],
+                    y=[10, 20, 30],
+                    type='scatter'
+                ),
+            ],
+            layout=dict(
+                title='first graph'
+            )
+        ),
 
-	return "App is running!"
+        dict(
+            data=[
+                dict(
+                    x=[1, 3, 5],
+                    y=[10, 50, 30],
+                    type='bar'
+                ),
+            ],
+            layout=dict(
+                title='second graph'
+            )
+        ),
 
+        dict(
+            data=[
+                dict(
+                    x=ts.index,  # Can use the pandas data structures directly
+                    y=ts
+                )
+            ]
+        )
+    ]
+
+    # Add "ids" to each of the graphs to pass up to the client
+    # for templating
+    ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
+
+    # Convert the figures to JSON
+    # PlotlyJSONEncoder appropriately converts pandas, datetime, etc
+    # objects to their JSON equivalents
+    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template('layouts/index.html',
+                           ids=ids,
+                           graphJSON=graphJSON)
 
 @app.route("/reddit/<string:subreddit>/<int:max_comments>")
 def api_call2(subreddit, max_comments):
@@ -208,9 +266,11 @@ def csite_call_api(input_string):
 	pos = 0
 	st = 0
 	sentence_count = 0
-	sentences = input_string.split('.')
+	sentences = re.split('[?.!]', input_string)
 	for sentence in sentences:
 		st += TextBlob(sentence).sentiment.subjectivity
+		if(len(sentence) == 0):
+			continue
 		scores = sentiment_analyzer_scores(sentence)
 		if scores['pos'] > scores['neg']:
 			pos += 1
