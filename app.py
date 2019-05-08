@@ -63,7 +63,7 @@ def run_reddit(keyword, subreddit, max_comments):
 	print(pos, neg, neu)
 	print(neg/cur_comments)
 	print(pos/cur_comments)
-	return "Negative: " + str((100 *neg)/cur_comments) + "% Positive: " + str((100*pos)/cur_comments) + "%"
+	return "Negative: " + str(round((100 *neg)/cur_comments)) + "% Positive: " + str(round((100*pos)/cur_comments)) + "%"
 
 
 #print(s)
