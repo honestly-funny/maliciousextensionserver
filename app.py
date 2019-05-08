@@ -1,8 +1,10 @@
 from flask import Flask
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+from flask_cors import CORS
 import praw
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/")
 def hello():

@@ -4,6 +4,7 @@ Flask-Migrate==2.1.0
 Flask-Script==2.0.5
 Flask-SQLAlchemy==2.2
 Flask-Testing==0.6.2
+flask-cors
 python-dateutil==2.6.1
 python-editor==1.0.3
 gunicorn
