@@ -10,3 +10,4 @@ python-editor==1.0.3
 gunicorn
 praw
 vaderSentiment
+tweepy
