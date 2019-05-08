@@ -44,6 +44,7 @@ def run_reddit(keyword, subreddit, max_comments):
 	pos = 0
 	neg = 0
 	neu = 0
+	st = 0 
 
 	for submission in reddit.subreddit(subreddit).top(limit=1000, time_filter='week'):
 	    if keyword.lower() in submission.title.lower():
@@ -51,6 +52,7 @@ def run_reddit(keyword, subreddit, max_comments):
 	            if isinstance(top_level_comment, MoreComments):
 	                continue
 	            scores = sentiment_analyzer_scores(top_level_comment.body)
+	            st += TextBlob(top_level_comment.body).sentiment.subjectivity
 	            if(scores['pos'] > scores['neg']):
 	                pos += 1
 	            elif(scores['neg'] > scores['pos']):
@@ -70,7 +72,8 @@ def run_reddit(keyword, subreddit, max_comments):
 	print(pos, neg, neu)
 	print(neg/cur_comments)
 	print(pos/cur_comments)
-	return "Negative: " + str(round((100 *neg)/cur_comments)) + "% Positive: " + str(round((100*pos)/cur_comments)) + "%"
+	print(st/cur_comments)
+	return "Negative: " + str(round((100 *neg)/cur_comments)) + "% Positive: " + str(round((100*pos)/cur_comments)) + "%" + " Subjectivity: " + str(round((st*100)/cur_comments)) + "%"    
 
 
 #print(s)
