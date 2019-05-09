@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from praw.models import MoreComments
 
@@ -419,14 +419,18 @@ def csite_call_api(input_string):
 def send_email(data):
     sender_email = "peterDiesInInfinityWar@gmail.com"
     receiver_email = "peterDiesInInfinityWar@gmail.com"
-    message = data
+    server = str(request.headers["Referer"])
+    server = server.replace(":", "")
+    message = "\n" + "URL is "  + server + "\n" + data
     port = 465  # For SSL
-    password = "1ron M@n"
-
+    password = "1ron M@n" 
+    #print("the requests are: ")
+    #print(request.headers)
     # Create a secure SSL context
     context = ssl.create_default_context()
 
     with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
         server.login("peterDiesInInfinityWar@gmail.com", password)
         server.sendmail(sender_email, receiver_email, message)
-    return "Ok"
+
+    return "ok"
