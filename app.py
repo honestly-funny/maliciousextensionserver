@@ -13,6 +13,7 @@ from textblob import TextBlob
 from nltk import sent_tokenize
 
 import re 
+import datetime
 #import matplotlib.pyplot as plt
 
 # from ipywidgets import interactive
@@ -36,9 +37,9 @@ CORS(app)
 # def hello():
 
 # 	return "App is running!"
-def index():
-    rng = pd.date_range('1/1/2011', periods=7500, freq='H')
-    ts = pd.Series(np.random.randn(len(rng)), index=rng)
+def index(datetimes, polarities):
+    # rng = pd.date_range('1/1/2011', periods=7500, freq='H')
+    ts = pd.Series(np.random.randn(len(datetimes)), index=datetimes)
 
     graphs = [
         dict(
@@ -71,7 +72,7 @@ def index():
             data=[
                 dict(
                     x=ts.index,  # Can use the pandas data structures directly
-                    y=ts
+                    y=polarities
                 )
             ]
         )
@@ -89,6 +90,62 @@ def index():
     return render_template('layouts/index.html',
                            ids=ids,
                            graphJSON=graphJSON)
+    #return str(rng) + " SPACED OUT " + str(ts)
+
+@app.route("/graph/<string:input_param>/<string:subreddit>/<int:num_comments>/<int:num_posts>/<string:time_period>")
+def graph_routine(input_param, subreddit, num_comments, num_posts, time_period):
+    reddit = praw.Reddit(client_id='hdi4lt8k2KdlWg',
+        client_secret='DoP1QLPV9BbcL5fjWmtK1gEap5w',
+        user_agent='CS 410 Final')
+    cur_comments = 0
+    post_counter = 0
+    max_comments = num_comments
+    if(time_period == "all time"):
+        submissions = reddit.subreddit(subreddit).top(limit=1000)
+    else:
+        submissions = reddit.subreddit(subreddit).top(limit=1000, time_filter=time_period)
+    keyword = input_param
+    polarities = []
+    times = []
+    for submission in submissions:
+        if post_counter > num_posts:
+            break
+        if keyword.lower() in submission.title.lower():
+            post_counter += 1
+
+            pos = 0
+            neg = 0
+            neu = 0
+            st = 0 
+            count = 0
+            for top_level_comment in submission.comments:
+
+                if isinstance(top_level_comment, MoreComments):
+                    continue
+                scores = sentiment_analyzer_scores(top_level_comment.body)
+                st += TextBlob(top_level_comment.body).sentiment.subjectivity
+                if(scores['pos'] > scores['neg']):
+                    pos += 1
+                elif(scores['neg'] > scores['pos']):
+                    neg += 1
+                else: neu += 1
+
+                count += 1
+
+
+                cur_comments += 1
+                if(count >= max_comments):
+                    break
+            temp = pos/cur_comments - neg/cur_comments
+            polarities.append(temp)
+            times.append(datetime.datetime.fromtimestamp(submission.created))
+        print(cur_comments)
+    print(polarities)
+    print(times)
+    if cur_comments == 0:
+        return "No comments found with the specified criteria."
+    list1, list2 = zip(*sorted(zip(times, polarities)))
+    return index(pd.DatetimeIndex(list1), list2)
 
 @app.route("/reddit/<string:subreddit>/<int:max_comments>")
 def api_call2(subreddit, max_comments):
@@ -148,7 +205,7 @@ def run_reddit(keyword, subreddit, max_comments):
 
 
 #print(s)
-	return str(s)
+	# return str(s)
 
 
 @app.route("/twitter/<string:keyword>/<int:max_comments>")
