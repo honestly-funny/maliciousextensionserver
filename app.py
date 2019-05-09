@@ -33,6 +33,8 @@ import numpy as np
 app = Flask(__name__)
 CORS(app)
 
+
+
 @app.route("/")
 #def hello():
 
@@ -41,18 +43,34 @@ CORS(app)
 def default_graphs(): 
     # rng = pd.date_range('1/1/2011', periods=7500, freq='H')
     #ts = pd.Series(np.random.randn(len(datetimes)), index=datetimes)
-
+    global neg
+    global neu
+    global pos
+    global st 
     graphs = [
         dict(
             data=[
                 dict(
-                    values = [30, 70],
-                    labels = ["positive", "negative"],
+                    values = [pos, neu, neg],
+                    labels = ["positive", "neutral", "negative"],
                     type='pie'
                 ),
             ],
             layout=dict(
                 title='Sentiment Analysis'
+            )
+        ), 
+
+        dict(
+            data=[
+                dict(
+                    values = [st, 1-st],
+                    labels = ["subjectivity", "objectivity"],
+                    type='pie'
+                ),
+            ],
+            layout=dict(
+                title='Subjectivity Analysis'
             )
         )
     ]
@@ -77,31 +95,31 @@ def index(datetimes, polarities):
     ts = pd.Series(np.random.randn(len(datetimes)), index=datetimes)
 
     graphs = [
-        dict(
-            data=[
-                dict(
-                    x=[1, 2, 3],
-                    y=[10, 20, 30],
-                    type='scatter'
-                ),
-            ],
-            layout=dict(
-                title='first graph'
-            )
-        ),
+        # dict(
+        #     data=[
+        #         dict(
+        #             x=[1, 2, 3],
+        #             y=[10, 20, 30],
+        #             type='scatter'
+        #         ),
+        #     ],
+        #     layout=dict(
+        #         title='first graph'
+        #     )
+        # ),
 
-        dict(
-            data=[
-                dict(
-                    x=[1, 3, 5],
-                    y=[10, 50, 30],
-                    type='bar'
-                ),
-            ],
-            layout=dict(
-                title='second graph'
-            )
-        ),
+        # dict(
+        #     data=[
+        #         dict(
+        #             x=[1, 3, 5],
+        #             y=[10, 50, 30],
+        #             type='bar'
+        #         ),
+        #     ],
+        #     layout=dict(
+        #         title='second graph'
+        #     )
+        # ),
 
         dict(
             data=[
@@ -204,6 +222,10 @@ def run_reddit(keyword, subreddit, max_comments):
 	negative = 0
 	positive = 0
 	neutral = 0
+	global pos
+	global neg
+	global neu
+	global st 
 
 	pos = 0
 	neg = 0
@@ -237,7 +259,8 @@ def run_reddit(keyword, subreddit, max_comments):
 	print(neg/cur_comments)
 	print(pos/cur_comments)
 	print(st/cur_comments)
-	return "Negative: " + str(round((100 *neg)/cur_comments)) + "% Positive: " + str(round((100*pos)/cur_comments)) + "%" + " Subjectivity: " + str(round((st*100)/cur_comments)) + "%"    
+	st = st/cur_comments
+	return "Negative: " + str(round((100 *neg)/cur_comments)) + "% Positive: " + str(round((100*pos)/cur_comments)) + "%" + " Subjectivity: " + str(round(st*100)) + "%"    
 
 
 #print(s)
@@ -248,12 +271,16 @@ def run_reddit(keyword, subreddit, max_comments):
 def twtter_call_api(keyword, max_comments):
 	return twitter(keyword, max_comments) + " Keyword, max_comments: " + keyword + ", " + str(max_comments)
 
+
+
 neg = 0
 pos = 0
 neu = 0
 tweet_count = 0
-pt = 0
+post = 0
+negt = 0
 st = 0
+
 
 def twitter(keyword, max_comments): 
 
@@ -286,7 +313,7 @@ def twitter(keyword, max_comments):
             all_data = json.loads(data)
 
             tweet = all_data["text"]
-            print(tweet)
+            #print(tweet)
             scores = sentiment_analyzer_scores(tweet)
             if(scores['pos'] > scores['neg']):
                 self.positive += 1
@@ -320,6 +347,9 @@ def twitter(keyword, max_comments):
                 
                 global pt
                 global st
+
+                global neu
+                neu = self.neutral
                 pt = self.polarity
                 st = self.subjectivity
                 
@@ -340,10 +370,10 @@ def twitter(keyword, max_comments):
 
     print(neg/tweet_count)
     print(pos/tweet_count)
+    global st
+    st = st/tweet_count
 
-    print(pt, st/tweet_count)
-
-    return "Negative: " + str(round((100 *neg)/tweet_count)) + "% Positive: " + str(round((100*pos)/tweet_count)) + "%" + " Subjectivity: " + str(round((st*100)/tweet_count)) + "%"    
+    return "Negative: " + str(round((100 *neg)/tweet_count)) + "% Positive: " + str(round((100*pos)/tweet_count)) + "%" + " Subjectivity: " + str(round(st*100)) + "%"    
 
 
 
@@ -355,7 +385,13 @@ def sentiment_analyzer_scores(sentence):
 
 @app.route("/site/<string:input_string>")
 def csite_call_api(input_string):
+	global neg 
+	global pos 
+	global neu 
+	global st 
+
 	neg = 0
+	neu = 0
 	pos = 0
 	st = 0
 	sentence_count = 0
@@ -369,10 +405,12 @@ def csite_call_api(input_string):
 			pos += 1
 		elif scores['pos'] < scores['neg']:
 			neg += 1
+		else: neu += 1
 		sentence_count += 1
 	if sentence_count == 0:
 		return "No sentences found, be sure to select some text"
-	return "Negative: " + str(round((100 *neg)/sentence_count)) + "% Positive: " + str(round((100*pos)/sentence_count)) + "%" + " Subjectivity: " + str(round((st*100)/sentence_count)) + "%"    
+	st = st/sentence_count
+	return "Negative: " + str(round((100 *neg)/sentence_count)) + "% Positive: " + str(round((100*pos)/sentence_count)) + "%" + " Subjectivity: " + str(round(st*100)) + "%"    
 
 
             
