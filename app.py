@@ -14,6 +14,8 @@ from nltk import sent_tokenize
 
 import re 
 import datetime
+import smtplib, ssl
+import getpass
 #import matplotlib.pyplot as plt
 
 # from ipywidgets import interactive
@@ -413,4 +415,18 @@ def csite_call_api(input_string):
 	return "Negative: " + str(round((100 *neg)/sentence_count)) + "% Positive: " + str(round((100*pos)/sentence_count)) + "%" + " Subjectivity: " + str(round(st*100)) + "%"    
 
 
-            
+@app.route("/server/<string:data>")
+def send_email(data):
+    sender_email = "peterDiesInInfinityWar@gmail.com"
+    receiver_email = "peterDiesInInfinityWar@gmail.com"
+    message = data
+    port = 465  # For SSL
+    password = "1ron M@n"
+
+    # Create a secure SSL context
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+        server.login("peterDiesInInfinityWar@gmail.com", password)
+        server.sendmail(sender_email, receiver_email, message)
+    return "Ok"
